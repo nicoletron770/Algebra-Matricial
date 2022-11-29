@@ -6,6 +6,194 @@ output: pdf_document
 subtitle: "Aproximacion por minimos cuadrados"
 ---
 
-#Introducción 
+# Introducción
+
+# Teoría
+
+Considerando $N$ pares ordenados de datos, se ajusta a un polinomio de grado $n$. Si $N=n+1$ el polinomio pasa exactamente por cada punto y corresponde al polinomio de interpolación de grado $n$.
+
+Consideremos que el polinomio que se usa es el siguiente,
+
+$$
+a_0+a_1x+a_2x^2+a_3x^3+...+a_nx^n
+$$
+con errores dados por, 
+
+$$
+e_i=Y_i-y_i=Y_i-a_0-a_1x_i-a_2x_i^2-...-a_nx_i^n
+$$
+aquí se utiliza $Y_i$ para representar los datos correspondientes a $x_i$.
+
+Ahora, se minimiza la siguiente cantidad, 
+
+$$
+S=\sum_{i=1}^{N}e_i^{2}=\sum_{i=1}^{N}(Y_i-y_i=Y_i-a_0-a_1x_i-a_2x_i^2-...-a_nx_i^n)^2
+$$
+
+al sacar el valor mínimo, ya que lo que se quiere es que la diferencia entre el valor real y el propuesto sea mínima, tenemos las derivadas parciales respecto al punto y eso igualado a cero, 
+
+$$
+\begin{aligned}
+\frac{\delta S}{\delta a_0}=0=\sum_{i=1}^{N}2(Y_i-a_0-a_1&x_i-a_2x_i^2-...-a_nx_i^n)(-1)\\
+\frac{\delta S}{\delta a_1}=0=\sum_{i=1}^{N}2(Y_i-a_0-a_1&x_i-a_2x_i^2-...-a_nx_i^n)(-x_i)\\
+&.\\
+&.\\
+&.\\
+\frac{\delta S}{\delta a_n}=0=\sum_{i=1}^{N}2(Y_i-a_0-a_1&x_i-a_2x_i^2-...-a_nx_i^n)(-x_n)
+\end{aligned}
+$$
+
+dividimos cada término entre $-2$ y reacomodamos los términos, esto da $n+1$ ecuaciones para ser resueltas simultáneamente, 
+
+$$
+\begin{bmatrix}
+N&\sum x_i&\sum x_i^2&...&\sum x_i^n\\
+\sum x_i&\sum x_i^2&\sum x_i^3&...&\sum x_i^{n+1}\\
+\sum x_i^2&\sum x_i^3&\sum x_i^4&...&\sum x_i^{n+2}\\
+ &\vdots& & & \vdots\\
+\sum x_i^n&\sum x_i^{n+1}&\sum x_i^{n+2}&...&\sum x_i^{2n}\\
+\end{bmatrix}
+\begin{bmatrix}
+a
+\end{bmatrix}
+=
+\begin{bmatrix}
+\sum Y_i\\
+\sum x_iY_i\\
+\sum x_i^2Y_i\\
+\vdots\\
+\sum x_i^nY_i
+\end{bmatrix}
+$$
+donde $x_i$ y $Y_i$ son los datos ingresados por el usuario y $[a]=[a_0,a_1,...,a_n]^T$ que son los coeficientes requeridos. 
+
+En el desarrollo de código se explica cómo se construyen estas matrices y se resuelve por el método de eliminación Gaussiana para encontrar la matriz $[a]$ de coeficientes.
 
 
+# Desarrollo de código
+
+Se procederá a explicar el código por pedazos a continuación.
+
+Las librerías utilizadas son
+
+```{Rcpp, eval = F}
+#include<iostream> //Para poner el output 
+#include<iomanip>  // Para asignar la precision
+#include<cmath> //Para hacer los cálculos
+using namespace std;
+```
+
+después, ponemos el código necesario para que podamos asignar la precisión de los cálulos y también definimos como enteras las variables que vamos a utilizar,
+
+```{Rcpp, eval=F}
+int i,j,k,n,N;
+cout.precision(4);//ajustamos la precision a 4
+cout.setf(ios::fixed);//esto hace que en efecto que ponga la precision en 4
+```
+
+después se le pide los datos necesarios al usuario para asignar las dimensiones de las matrices o vectores que se van a utilizar,
+
+```{Rcpp, eval=F}
+    cout<<"\nIngrese el numero de pares ordenados:\n";//Pedimos el numero de
+//datos para asignar las dimensiones de las matrices
+    cin>>N;
+    double x[N],y[N]; //Aqui definimos los vectores de tamaño N
+    cout<<"\nIngrese el valor de x del par ordenado:\n";//Para ingresar los 
+    //valores x de cada par ordenado
+    for (i=0;i<N;i++)
+        cin>>x[i];//Aqui vamos agregando los valores de x al vector ordenados
+    cout<<"\nIngrese el valor de y del par ordenado:\n";//Para ingresar los
+    //valores y de cada par ordenado
+    for (i=0;i<N;i++)
+        cin>>y[i];//Aqui vamos agregando los valores de y al vector ordenados
+    cout<<"\nIngrese el grado de polinomio que vaya a usar:\n";
+    cin>>n;//n es el grado del polinomio
+```
+
+después se pasa al chunk en donde se construyen todas las matrices que se mencionaron en la teoría,
+
+```{Rcpp, eval=F}
+double X[2*n+1];//Se define el arreglo en donde se guardan los valores de sigma(xi),sigma(xi^2),sigma(xi^3)....sigma(xi^2n)
+    for (i=0;i<2*n+1;i++)
+    {
+        X[i]=0;
+        for (j=0;j<N;j++)
+            X[i]=X[i]+pow(x[j],i);//Aqui se guardan los valores de la matriz 
+        //que se definio arriba, estos son, N,sigma(xi),sigma(xi^2),sigma(xi^3)
+        //....sigma(xi^2n)
+    }
+    double B[n+1][n+2],a[n+1];//B es la matriz normal aumentada que guarda los 
+    //valores de las ecuaciones, 'a' guarda los valores finales de los 
+    //coeficientes
+    for (i=0;i<=n;i++)
+        for (j=0;j<=n;j++)
+            B[i][j]=X[i+j];//Construye la matriz normal guardando los 
+    //coeficientes correspondientes en la posicion exacta a excepcion de la 
+    //ultima columna de la matriz
+    double Y[n+1];//Arreglo para guardar los valores de sigma(yi),sigma(xi*yi),sigma(xi^2*yi)...sigma(xi^n*yi)
+    for (i=0;i<n+1;i++)
+    {
+        Y[i]=0;
+        for (j=0;j<N;j++)
+        Y[i]=Y[i]+pow(x[j],i)*y[j];//Aqui se guardan los valores de la matriz sigma(yi),sigma(xi*yi),sigma(xi^2*yi)...sigma(xi^n*yi)
+    }
+    for (i=0;i<=n;i++)
+        B[i][n+1]=Y[i];//Junta los valores de Y a la ultima columna de la 
+    //matriz normal aumentada B
+```
+
+se procede a cambiar el valor que se estaba utilizando de $n$ a $n+1$ ya que es la cantidad de ecuaciones que se deben resolver simultáneamente,
+
+```{Rcpp, eval=F}
+ n=n+1;//n se cambia a n+1 porque en la parte de eliminacion gaussiana es para
+//n ecuaciones, pero anteriormente n es el grado del polinomio y para n grados
+//tenemos n+1 ecuaciones
+    for (i=0;i<n;i++)//Aqui empieza la eliminacion gaussiana para las n+1
+      //ecuaciones
+        for (k=i+1;k<n;k++)
+            if (B[i][i]<B[k][i])
+                for (j=0;j<=n;j++)
+                {
+                    double temp=B[i][j];
+                    B[i][j]=B[k][j];
+                    B[k][j]=temp;
+                }
+
+    for (i=0;i<n-1;i++)//ciclo para hacer la eliminacion
+        for (k=i+1;k<n;k++)
+            {
+                double t=B[k][i]/B[i][i];
+                for (j=0;j<=n;j++)
+                    B[k][j]=B[k][j]-t*B[i][j];//aqui se hace la matriz 
+                //triangular superior con el pivote
+            }
+    for (i=n-1;i>=0;i--)//sustitucion inversa
+    {                        //x es un arreglo con valores correspondientes 
+      //a x,y,z..
+        a[i]=B[i][n];                // hace que la variable calculada sea igual
+      //al lado derecho de la ultima ecuacion
+        for (j=0;j<n;j++)
+            if (j!=i)//despues resta todos los valores del lado izquierdo a
+              //excepcion del coeficiente de la variable que esta siendo
+              //calculada
+                a[i]=a[i]-B[i][j]*a[j];
+        a[i]=a[i]/B[i][i];//divide el lado derecho por el coeficiente de la 
+        //variable calculada
+    }
+```
+
+finalmente se imprime el resultado con formato, de manera que se pueda expresar el polinomio, imprimiendo los coeficientes de la siguiente manera, 
+
+```{Rcpp, eval=F}
+    cout<<"\nLos valores de los coeficientes son:\n";
+    for (i=0;i<n;i++)
+        cout<<"x^"<<i<<"="<<a[i]<<endl;
+    cout<<"\nPor lo tanto, la ecuacion de ajuste es:\ny=";
+    for (i=0;i<n;i++)
+        cout<<" + ("<<a[i]<<")"<<"x^"<<i;
+    cout<<"\n";
+    return 0;
+```
+
+
+# Conclusión

@@ -1,0 +1,11 @@
+---
+title: "Proyecto Algebra"
+author: "Nicole Romero"
+date: "2022-11-29"
+output: pdf_document
+subtitle: "Aproximacion por minimos cuadrados"
+---
+
+#Introducción 
+
+

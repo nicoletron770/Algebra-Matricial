@@ -1,12 +1,16 @@
 ---
-title: "Proyecto Algebra"
+title: "Proyecto Álgebra"
 author: "Nicole Romero"
 date: "2022-11-29"
 output: pdf_document
-subtitle: "Aproximacion por minimos cuadrados"
+subtitle: "Aproximación por mínimos cuadrados"
 ---
 
 # Introducción
+
+Uno de las aplicaciones más utilizadas en el campo es el método de mínimos cuadrados. Por medio de solución de matrices se puede llegar a una aproximación polinomial de pares de datos ordenados. En este trabajo se presentará la teoría de cómo funciona este método y cómo se construyen las matrices necesarias para la producción del polinomio de grado que el usuario propondrá. A su vez, se muestra el código que se realizó explicado linea por linea. 
+
+Finalmente se muestran capturas del código cuando corre, su resultando y se grafica para ver que tan efectivo es el método. 
 
 # Teoría
 
@@ -95,7 +99,7 @@ después se le pide los datos necesarios al usuario para asignar las dimensiones
 
 ```{Rcpp, eval=F}
     cout<<"\nIngrese el numero de pares ordenados:\n";//Pedimos el numero de
-//datos para asignar las dimensiones de las matrices
+    //datos para asignar las dimensiones de las matrices
     cin>>N;
     double x[N],y[N]; //Aqui definimos los vectores de tamaño N
     cout<<"\nIngrese el valor de x del par ordenado:\n";//Para ingresar los 
@@ -113,7 +117,9 @@ después se le pide los datos necesarios al usuario para asignar las dimensiones
 después se pasa al chunk en donde se construyen todas las matrices que se mencionaron en la teoría,
 
 ```{Rcpp, eval=F}
-double X[2*n+1];//Se define el arreglo en donde se guardan los valores de sigma(xi),sigma(xi^2),sigma(xi^3)....sigma(xi^2n)
+double X[2*n+1];//Se define el arreglo en donde se guardan los valores de 
+//sigma(xi),sigma(xi^2),
+//sigma(xi^3)....sigma(xi^2n)
     for (i=0;i<2*n+1;i++)
     {
         X[i]=0;
@@ -130,12 +136,15 @@ double X[2*n+1];//Se define el arreglo en donde se guardan los valores de sigma(
             B[i][j]=X[i+j];//Construye la matriz normal guardando los 
     //coeficientes correspondientes en la posicion exacta a excepcion de la 
     //ultima columna de la matriz
-    double Y[n+1];//Arreglo para guardar los valores de sigma(yi),sigma(xi*yi),sigma(xi^2*yi)...sigma(xi^n*yi)
+    double Y[n+1];//Arreglo para guardar los valores de sigma(yi),
+    //sigma(xi*yi),sigma(xi^2*yi)...sigma(xi^n*yi)
     for (i=0;i<n+1;i++)
     {
         Y[i]=0;
         for (j=0;j<N;j++)
-        Y[i]=Y[i]+pow(x[j],i)*y[j];//Aqui se guardan los valores de la matriz sigma(yi),sigma(xi*yi),sigma(xi^2*yi)...sigma(xi^n*yi)
+        Y[i]=Y[i]+pow(x[j],i)*y[j];//Aqui se guardan los valores de la matriz 
+        //sigma(yi),sigma(xi*yi),
+        //sigma(xi^2*yi)...sigma(xi^n*yi)
     }
     for (i=0;i<=n;i++)
         B[i][n+1]=Y[i];//Junta los valores de Y a la ultima columna de la 
@@ -195,5 +204,97 @@ finalmente se imprime el resultado con formato, de manera que se pueda expresar 
     return 0;
 ```
 
+# Resultados
+
+Se corre el programa para 4 puntos y queremos un polinomio de grado 1, estos datos provienen de una varilla de longitud L ligada a una temperatura T.  
+
+$$
+\begin{aligned}
+P_1(20,1000.22),\hspace{0.2cm}
+P_2(40,1000.65)\\
+P_3(50,1000.9),\hspace{0.2cm}
+P_4(60,1001.05)
+\end{aligned}
+$$
+Al aplicar el programa, 
+
+```{r figurename, echo=FALSE, fig.cap="Datos ordenados ingresados en el código", out.width = '90%'}
+knitr::include_graphics("1.png")
+```
+Esto, en una gráfica se ve de la siguiente manera, 
+
+```{r, echo=F}
+x <- c(0:70)
+plot(999.8040+0.0212*x, type = "l", ylab = "Temperatura", xlab = "Longitud", col = "purple", xlim = c(0,70), main = "Temperatura vs Longitud")
+points(20,1000.22)
+points(40,1000.65)
+points(50,1000.9)
+points(60,1001.05)
+legend("bottomright", 
+       legend = expression(999.8040+0.0212*x), 
+       lwd = 2, 
+       col = "purple", 
+       lty = "dashed"
+       )
+```
+
+Ahora ajustaremos varios polinomios de diferentes grados a un mismo conjunto de puntos, 
+
+$$
+\begin{aligned}
+P_1(0.1,0.61),\hspace{0.2cm}
+P_2(0.4,0.92)\\
+P_3(0.5,0.99),\hspace{0.2cm}
+P_4(0.7,1.52)\\
+P_5(0.7,1.47),\hspace{0.2cm}
+P_6(0.9,20.3)
+\end{aligned}
+$$
+Ingresando estos datos para un polinomio de grado 1, 2, 3 y 4, tenemos respectivamente que, 
+
+```{r figurename2, echo=FALSE, fig.cap="Polinomio Grado 1", out.width = '90%'}
+knitr::include_graphics("2.png")
+```
+
+
+```{r figurename3, echo=FALSE, fig.cap="Polinomio Grado 2", out.width = '90%'}
+knitr::include_graphics("3.png")
+```
+
+
+```{r figurename4, echo=FALSE, fig.cap="Polinomio Grado 3", out.width = '90%'}
+knitr::include_graphics("4.png")
+```
+
+
+```{r figurename5, echo=FALSE, fig.cap="Polinomio Grado 4", out.width = '90%'}
+knitr::include_graphics("5.png")
+```
+
+Graficando todos los polinomios juntos para compararlos tenemos lo siguiente, 
+
+```{r, echo=F}
+x <- seq(0,1,0.1)
+plot(-5.5726+17.9532*x, type = "l", ylab = "f(x)", xlab = "x", col = "purple", xlim = c(0,1), main = "Varios Polinomios ajustados a 6 puntos")
+curve(6.3509-49.6153*x+68.5226*x^2, col = "red", add = T)
+curve(-6.7269+99.5353*x-291.4111*x^2+237.8338*x^3, col = "hotpink", add = T)
+curve(7.8344-116.1302*x+524.4733*x^2-910.3090*x^3+545.2569*x^4, col = "green", add = T)
+points(0.1,0.61)
+points(0.4,0.92)
+points(0.5,0.99)
+points(0.7,1.52)
+points(0.7,1.47)
+points(0.9,20.3)
+legend("bottomright", 
+       legend = c("Grado 1", "Grado 2", "Grado 3", "Grado 4"), 
+       lwd = 2, 
+       col = c("purple", "red","hotpink", "green"), 
+       lty = c("dashed", "dashed", "dashed", "dashed")
+       )
+```
 
 # Conclusión
+
+Podemos observar que el método de mínimos cuadrados como ajuste para un polinomio funciona bien como primera aproximación, una desventaja es que hay que saber qué polinomio es el que ajusta más, como se observa en el primer ejemplo, la recta ajusta muy bien, mientras que en el segundo ejemplo ni siquiera se observa el polinomio de grado 1 y el mejor ajuste lo tiene el de grado 4. 
+
+Con esto se puede conjeturar que este método es bueno y fácil de construir, aplicar y entender, pero al momento de querer tener otro tipo de ajustos (no polinomiales) se tendría que hacer modificaciones para poder considerar estas otras gráficas. 

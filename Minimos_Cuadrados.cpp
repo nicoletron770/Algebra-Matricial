@@ -10,7 +10,7 @@ int main()
     cout.setf(ios::fixed);//esto hace que en efecto que ponga la precision en 4
     cout<<"\nIngrese el numero de pares ordenados:\n";//Pedimos el numero de datos para asignar las dimensiones de las matrices
     cin>>N;
-    double x[N],y[N]; //Aqui definimos los vectores de tamaño N
+    double x[N],y[N]; //Aqui definimos los vectores de tamaÃ±o N
     cout<<"\nIngrese el valor de x del par ordenado:\n";//Para ingresar los valores x de cada par ordenado
     for (i=0;i<N;i++)
         cin>>x[i];//Aqui vamos agregando los valores de x al vector ordenados
